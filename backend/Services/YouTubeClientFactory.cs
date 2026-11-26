@@ -27,30 +27,20 @@ public static class YouTubeClientFactory
 
     public static YoutubeClient Create(IConfiguration configuration, ILogger logger)
     {
-        var cookies = YouTubeCookieParser.Parse(configuration["YouTube:Cookies"]);
         var proxy = ParseProxy(configuration["YouTube:ProxyUrl"]);
 
         if (proxy is not null)
         {
-            logger.LogInformation("Initialized YoutubeClient with proxy and {Count} cookies.", cookies.Count);
+            logger.LogInformation("Initialized YoutubeClient with proxy.");
             var handler = new HttpClientHandler
             {
                 Proxy = proxy,
                 UseProxy = true
             };
-            var httpClient = new HttpClient(handler);
-            return cookies.Count > 0
-                ? new YoutubeClient(httpClient, cookies)
-                : new YoutubeClient(httpClient);
+            return new YoutubeClient(new HttpClient(handler));
         }
 
-        if (cookies.Count > 0)
-        {
-            logger.LogInformation("Initialized YoutubeClient with {Count} cookies.", cookies.Count);
-            return new YoutubeClient(cookies);
-        }
-
-        logger.LogInformation("Initialized YoutubeClient without proxy or cookies.");
+        logger.LogInformation("Initialized YoutubeClient without proxy.");
         return new YoutubeClient();
     }
 }
