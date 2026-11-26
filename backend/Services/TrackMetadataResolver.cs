@@ -5,15 +5,16 @@ using System.Text.RegularExpressions;
 using Nusic.Api.Models;
 using Nusic.Api.Services.Interfaces;
 using YoutubeExplode;
+using YoutubeExplode.Exceptions;
 using YoutubeExplode.Videos;
 
 namespace Nusic.Api.Services;
 
 public sealed partial class TrackMetadataResolver(
+    YoutubeClient youtube,
     IHttpClientFactory httpClientFactory,
     ILogger<TrackMetadataResolver> logger) : IMetadataResolver
 {
-    private readonly YoutubeClient _youtube = new();
 
     public async Task<ResolvedTrackMetadata?> ResolveAsync(string url, CancellationToken ct)
     {
@@ -35,19 +36,27 @@ public sealed partial class TrackMetadataResolver(
         string originalUrl,
         CancellationToken ct)
     {
-        var video = await _youtube.Videos.GetAsync(videoId, ct);
-        var thumbnail = video.Thumbnails
-            .OrderByDescending(t => t.Resolution.Area)
-            .FirstOrDefault()?.Url;
+        try
+        {
+            var video = await youtube.Videos.GetAsync(videoId, ct);
+            var thumbnail = video.Thumbnails
+                .OrderByDescending(t => t.Resolution.Area)
+                .FirstOrDefault()?.Url;
 
-        return new ResolvedTrackMetadata(
-            SourceType: "youtube",
-            OriginalUrl: originalUrl,
-            YouTubeVideoId: video.Id.Value,
-            Title: video.Title,
-            Artist: video.Author.ChannelTitle,
-            DurationSeconds: video.Duration.HasValue ? (int)video.Duration.Value.TotalSeconds : null,
-            ThumbnailUrl: thumbnail);
+            return new ResolvedTrackMetadata(
+                SourceType: "youtube",
+                OriginalUrl: originalUrl,
+                YouTubeVideoId: video.Id.Value,
+                Title: video.Title,
+                Artist: video.Author.ChannelTitle,
+                DurationSeconds: video.Duration.HasValue ? (int)video.Duration.Value.TotalSeconds : null,
+                ThumbnailUrl: thumbnail);
+        }
+        catch (YoutubeExplodeException ex)
+        {
+            logger.LogWarning(ex, "YouTube metadata extraction failed for {VideoId}", videoId.Value);
+            return null;
+        }
     }
 
     private async Task<ResolvedTrackMetadata?> ResolveSpotifyAsync(string spotifyUrl, CancellationToken ct)
@@ -67,16 +76,24 @@ public sealed partial class TrackMetadataResolver(
             ? $"{oEmbed.Title} audio"
             : $"{artist} {oEmbed.Title} audio";
 
-        await foreach (var candidate in _youtube.Search.GetVideosAsync(searchQuery, ct))
+        try
         {
-            return new ResolvedTrackMetadata(
-                SourceType: "spotify",
-                OriginalUrl: spotifyUrl,
-                YouTubeVideoId: candidate.Id.Value,
-                Title: oEmbed.Title,
-                Artist: artist,
-                DurationSeconds: candidate.Duration.HasValue ? (int)candidate.Duration.Value.TotalSeconds : null,
-                ThumbnailUrl: oEmbed.ThumbnailUrl);
+            await foreach (var candidate in youtube.Search.GetVideosAsync(searchQuery, ct))
+            {
+                return new ResolvedTrackMetadata(
+                    SourceType: "spotify",
+                    OriginalUrl: spotifyUrl,
+                    YouTubeVideoId: candidate.Id.Value,
+                    Title: oEmbed.Title,
+                    Artist: artist,
+                    DurationSeconds: candidate.Duration.HasValue ? (int)candidate.Duration.Value.TotalSeconds : null,
+                    ThumbnailUrl: oEmbed.ThumbnailUrl);
+            }
+        }
+        catch (YoutubeExplodeException ex)
+        {
+            logger.LogWarning(ex, "YouTube search failed for Spotify track {Title}", oEmbed.Title);
+            return null;
         }
 
         logger.LogWarning("No YouTube match found for Spotify track {Title}", oEmbed.Title);

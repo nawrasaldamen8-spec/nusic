@@ -3,18 +3,19 @@ using Microsoft.Extensions.Caching.Memory;
 using Nusic.Api.Models;
 using Nusic.Api.Services.Interfaces;
 using YoutubeExplode;
+using YoutubeExplode.Exceptions;
 using YoutubeExplode.Videos;
 using YoutubeExplode.Videos.Streams;
 
 namespace Nusic.Api.Services;
 
 public sealed class YouTubeStreamResolver(
+    YoutubeClient youtube,
     IMemoryCache cache,
     ILogger<YouTubeStreamResolver> logger) : IStreamResolver
 {
     private static readonly TimeSpan MaxCacheDuration = TimeSpan.FromMinutes(45);
     private static readonly TimeSpan ExpirySafetyBuffer = TimeSpan.FromMinutes(2);
-    private readonly YoutubeClient _youtube = new();
 
     public async Task<ResolvedAudioStream?> ResolveAudioStreamAsync(
         string youtubeVideoId,
@@ -31,7 +32,21 @@ public sealed class YouTubeStreamResolver(
                 return cached;
         }
 
-        var manifest = await _youtube.Videos.Streams.GetManifestAsync(parsedId.Value, ct);
+        StreamManifest manifest;
+        try
+        {
+            manifest = await youtube.Videos.Streams.GetManifestAsync(parsedId.Value, ct);
+        }
+        catch (YoutubeExplodeException ex)
+        {
+            logger.LogWarning(ex, "YouTube stream manifest extraction failed for {VideoId}", parsedId.Value);
+            return null;
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning(ex, "HTTP error while extracting YouTube stream for {VideoId}", parsedId.Value);
+            return null;
+        }
         var audioStream = SelectPreferredAudioStream(manifest);
         if (audioStream is null)
             return null;

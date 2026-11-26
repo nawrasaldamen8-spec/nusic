@@ -40,6 +40,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient("StreamProxy");
 builder.Services.AddHttpClient("MetadataClient");
+builder.Services.AddSingleton(sp => YouTubeClientFactory.Create(
+    builder.Configuration,
+    sp.GetRequiredService<ILoggerFactory>().CreateLogger("YouTubeClientFactory")));
 builder.Services.AddSingleton<IStreamResolver, YouTubeStreamResolver>();
 builder.Services.AddSingleton<IMetadataResolver, TrackMetadataResolver>();
 builder.Services.AddScoped<IAuthService, AuthService>();

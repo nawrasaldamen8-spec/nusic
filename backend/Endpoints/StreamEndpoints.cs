@@ -74,7 +74,10 @@ public static class StreamEndpoints
         if (string.IsNullOrWhiteSpace(videoId))
             return Results.NotFound();
 
-        await streamResolver.ResolveAudioStreamAsync(videoId, ct);
+        var resolved = await streamResolver.ResolveAudioStreamAsync(videoId, ct);
+        if (resolved is null)
+            return Results.Json(new { error = "Could not resolve YouTube audio stream." }, statusCode: StatusCodes.Status502BadGateway);
+
         return Results.NoContent();
     }
 
@@ -123,9 +126,9 @@ public static class StreamEndpoints
         var resolved = await streamResolver.ResolveAudioStreamAsync(videoId, ct);
         if (resolved is null)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.StatusCode = StatusCodes.Status502BadGateway;
             await context.Response.WriteAsJsonAsync(
-                new { error = "Audio stream not found or invalid video ID." },
+                new { error = "Could not resolve YouTube audio stream." },
                 ct);
             return;
         }
