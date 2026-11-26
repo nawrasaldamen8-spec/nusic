@@ -38,7 +38,14 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
-builder.Services.AddHttpClient("StreamProxy");
+builder.Services.AddHttpClient("StreamProxy")
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var proxy = YouTubeClientFactory.ParseProxy(builder.Configuration["YouTube:ProxyUrl"]);
+        return proxy is null
+            ? new HttpClientHandler()
+            : new HttpClientHandler { Proxy = proxy, UseProxy = true };
+    });
 builder.Services.AddHttpClient("MetadataClient");
 builder.Services.AddSingleton(sp => YouTubeClientFactory.Create(
     builder.Configuration,
