@@ -16,21 +16,38 @@ import {
 } from './features/playlists/usePlaylists'
 import { AddTrackForm } from './features/tracks/AddTrackForm'
 import { EditMatchModal } from './features/tracks/EditMatchModal'
+import { ShareTargetModal } from './features/tracks/ShareTargetModal'
+import { extractSharedUrl } from './features/tracks/shareUtils'
 import { TrackList } from './features/tracks/TrackList'
+import { tracksApi } from './features/tracks/tracksApi'
 import {
   useAddTrackMutation,
   useDeleteTrackMutation,
   usePlaylistTracksQuery,
   useUpdateTrackMatchMutation,
 } from './features/tracks/usePlaylistTracks'
+import { queryKeys } from './shared/api/queryClient'
 import { TopBar } from './shared/components/TopBar'
-import type { Track } from './shared/types/api'
+import type { Playlist, Track } from './shared/types/api'
 
 function toErrorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback
 }
 
 const LAST_PLAYLIST_KEY = 'nusic_last_playlist'
+const PENDING_SHARE_KEY = 'nusic_pending_share_url'
+
+function consumeInitialShareUrl(): string | null {
+  if (window.location.pathname === '/share') {
+    const extracted = extractSharedUrl(window.location.search)
+    window.history.replaceState(null, '', '/')
+    if (extracted) {
+      sessionStorage.setItem(PENDING_SHARE_KEY, extracted)
+      return extracted
+    }
+  }
+  return sessionStorage.getItem(PENDING_SHARE_KEY)
+}
 
 function getInitialPlaylistId(): string | null {
   const fromQuery = new URLSearchParams(window.location.search).get('playlist')
@@ -44,6 +61,9 @@ function Workspace() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(() => getInitialPlaylistId())
   const [searchQuery, setSearchQuery] = useState('')
   const [editingTrack, setEditingTrack] = useState<Track | null>(null)
+  const [pendingShareUrl, setPendingShareUrl] = useState<string | null>(() =>
+    consumeInitialShareUrl()
+  )
   const [isMobilePlayerOpen, setIsMobilePlayerOpen] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -182,6 +202,30 @@ function Workspace() {
     void player.playTrack(tracks[0])
   }
 
+  function handleCloseShareModal() {
+    sessionStorage.removeItem(PENDING_SHARE_KEY)
+    setPendingShareUrl(null)
+  }
+
+  async function handleAddSharedTrack(playlistId: string, url: string) {
+    const added = await tracksApi.add(playlistId, url)
+    queryClient.setQueryData<Track[]>(queryKeys.tracks(playlistId), (prev) =>
+      prev ? [...prev, added] : [added]
+    )
+    queryClient.setQueryData<Playlist[]>(queryKeys.playlists, (prev) =>
+      prev?.map((p) =>
+        p.id === playlistId
+          ? {
+              ...p,
+              trackCount: p.trackCount + 1,
+              coverUrl: p.coverUrl ?? added.thumbnailUrl,
+            }
+          : p
+      )
+    )
+    setSelectedPlaylistId(playlistId)
+  }
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-void-black text-pure-white">
       <TopBar
@@ -252,6 +296,17 @@ function Workspace() {
         onSave={handleSaveMatch}
       />
 
+      {pendingShareUrl && playlists.length > 0 && (
+        <ShareTargetModal
+          key={pendingShareUrl}
+          sharedUrl={pendingShareUrl}
+          playlists={playlists}
+          defaultPlaylistId={activePlaylistId}
+          onClose={handleCloseShareModal}
+          onAddToPlaylist={handleAddSharedTrack}
+        />
+      )}
+
       <AudioPlayer
         audioRef={player.audioRef}
         track={player.currentTrack}
@@ -292,6 +347,9 @@ function Workspace() {
 
 function AppGate() {
   const { isAuthenticated } = useAuth()
+  useState(() => {
+    if (!isAuthenticated) consumeInitialShareUrl()
+  })
   return isAuthenticated ? <Workspace /> : <LoginForm />
 }
 
