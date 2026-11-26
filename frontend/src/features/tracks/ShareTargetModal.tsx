@@ -1,3 +1,4 @@
+import { Check, Music, Plus } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import type { Playlist } from '../../shared/types/api'
 
@@ -7,6 +8,7 @@ interface ShareTargetModalProps {
   defaultPlaylistId: string | null
   onClose: () => void
   onAddToPlaylist: (playlistId: string, url: string) => Promise<void>
+  onCreateAndAdd: (playlistName: string, url: string) => Promise<void>
 }
 
 export function ShareTargetModal({
@@ -15,6 +17,7 @@ export function ShareTargetModal({
   defaultPlaylistId,
   onClose,
   onAddToPlaylist,
+  onCreateAndAdd,
 }: ShareTargetModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
@@ -22,6 +25,8 @@ export function ShareTargetModal({
   const [playlistId, setPlaylistId] = useState(
     () => defaultPlaylistId ?? playlists[0]?.id ?? ''
   )
+  const [isCreatingNew, setIsCreatingNew] = useState(() => playlists.length === 0)
+  const [newPlaylistName, setNewPlaylistName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -43,14 +48,22 @@ export function ShareTargetModal({
     onClose()
   }
 
+  const canSubmit = Boolean(
+    url.trim() && (isCreatingNew ? newPlaylistName.trim() : playlistId)
+  )
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!playlistId || !url.trim()) return
+    if (!canSubmit) return
 
     setError(null)
     setIsSaving(true)
     try {
-      await onAddToPlaylist(playlistId, url.trim())
+      if (isCreatingNew) {
+        await onCreateAndAdd(newPlaylistName.trim(), url.trim())
+      } else {
+        await onAddToPlaylist(playlistId, url.trim())
+      }
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add shared track.')
@@ -67,7 +80,7 @@ export function ShareTargetModal({
       className="m-auto w-full max-w-md rounded-[6px] bg-obsidian p-6 text-pure-white shadow-lg"
     >
       <h1 id={titleId} className="mb-4 text-lg font-bold">
-        Add Shared Track
+        Add to Playlist
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,24 +98,77 @@ export function ShareTargetModal({
           />
         </div>
 
-        <div>
-          <label htmlFor="shared-playlist-select" className="mb-1.5 block text-xs font-semibold text-cloud-gray">
-            Playlist
-          </label>
-          <select
-            id="shared-playlist-select"
-            name="sharedPlaylistId"
-            autoFocus
-            value={playlistId}
-            onChange={(e) => setPlaylistId(e.target.value)}
-            className="w-full rounded-[4px] border border-ash-gray bg-graphite px-3 py-2 text-sm text-pure-white focus:border-pure-white focus:outline-none"
-          >
-            {playlists.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-cloud-gray">
+              {isCreatingNew ? 'New Playlist' : 'Choose Playlist'}
+            </span>
+            {playlists.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreatingNew((prev) => !prev)
+                  setError(null)
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-graphite px-3 py-1 text-xs font-semibold text-pure-white hover:bg-ash-gray"
+              >
+                <Plus className="h-3.5 w-3.5 text-nusic-green" />
+                <span>{isCreatingNew ? 'Existing playlist' : 'New playlist'}</span>
+              </button>
+            )}
+          </div>
+
+          {isCreatingNew ? (
+            <input
+              id="shared-new-playlist-name"
+              name="newPlaylistName"
+              type="text"
+              autoFocus
+              value={newPlaylistName}
+              onChange={(e) => setNewPlaylistName(e.target.value)}
+              placeholder="Playlist name"
+              className="w-full rounded-[4px] border border-ash-gray bg-graphite px-3 py-2 text-sm text-pure-white focus:border-pure-white focus:outline-none"
+            />
+          ) : (
+            <div
+              role="radiogroup"
+              aria-label="Playlists"
+              className="max-h-60 space-y-1.5 overflow-y-auto pr-1"
+            >
+              {playlists.map((p) => {
+                const isSelected = p.id === playlistId
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => setPlaylistId(p.id)}
+                    className={`flex w-full items-center gap-3 rounded-[6px] px-3 py-2 text-left transition-colors ${
+                      isSelected
+                        ? 'bg-graphite ring-1 ring-nusic-green'
+                        : 'bg-void-black/60 hover:bg-graphite/60'
+                    }`}
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-graphite">
+                      {p.coverUrl ? (
+                        <img src={p.coverUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <Music className="h-4 w-4 text-cloud-gray" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`truncate text-sm font-semibold ${isSelected ? 'text-nusic-green' : 'text-pure-white'}`}>
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-cloud-gray">{p.trackCount} tracks</p>
+                    </div>
+                    {isSelected && <Check className="h-4 w-4 shrink-0 text-nusic-green" />}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
@@ -117,10 +183,10 @@ export function ShareTargetModal({
           </button>
           <button
             type="submit"
-            disabled={isSaving || !playlistId || !url.trim()}
+            disabled={isSaving || !canSubmit}
             className="rounded-full bg-nusic-green px-6 py-2 text-sm font-bold text-void-black disabled:opacity-50"
           >
-            {isSaving ? 'Adding...' : 'Add'}
+            {isSaving ? 'Adding...' : isCreatingNew ? 'Create & Add' : 'Add'}
           </button>
         </div>
       </form>

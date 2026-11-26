@@ -226,6 +226,11 @@ function Workspace() {
     setSelectedPlaylistId(playlistId)
   }
 
+  async function handleCreateAndAddSharedTrack(playlistName: string, url: string) {
+    const created = await createPlaylistMutation.mutateAsync(playlistName)
+    await handleAddSharedTrack(created.id, url)
+  }
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-void-black text-pure-white">
       <TopBar
@@ -296,7 +301,7 @@ function Workspace() {
         onSave={handleSaveMatch}
       />
 
-      {pendingShareUrl && playlists.length > 0 && (
+      {pendingShareUrl && (
         <ShareTargetModal
           key={pendingShareUrl}
           sharedUrl={pendingShareUrl}
@@ -304,6 +309,7 @@ function Workspace() {
           defaultPlaylistId={activePlaylistId}
           onClose={handleCloseShareModal}
           onAddToPlaylist={handleAddSharedTrack}
+          onCreateAndAdd={handleCreateAndAddSharedTrack}
         />
       )}
 
