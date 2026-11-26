@@ -1,0 +1,6 @@
+@Nusic.Api_HostAddress = http://localhost:5082
+
+GET {{Nusic.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Nusic.Api.csproj" />
+  <Project Path="Nusic.Api.Tests/Nusic.Api.Tests.csproj" />
+</Solution>
