@@ -1,6 +1,8 @@
 import { Check, Music, Plus } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
-import type { Playlist } from '../../shared/types/api'
+import type { Playlist, TrackPreview } from '../../shared/types/api'
+import { findMatchingPlaylist, normalizeArtistName } from './shareUtils'
+import { tracksApi } from './tracksApi'
 
 interface ShareTargetModalProps {
   sharedUrl: string | null
@@ -27,6 +29,8 @@ export function ShareTargetModal({
   )
   const [isCreatingNew, setIsCreatingNew] = useState(() => playlists.length === 0)
   const [newPlaylistName, setNewPlaylistName] = useState('')
+  const [preview, setPreview] = useState<TrackPreview | null>(null)
+  const [isDetecting, setIsDetecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -40,6 +44,40 @@ export function ShareTargetModal({
       dialog.close()
     }
   }, [sharedUrl])
+
+  useEffect(() => {
+    if (!sharedUrl) return
+    let cancelled = false
+    setIsDetecting(true)
+
+    tracksApi
+      .preview(sharedUrl)
+      .then((info) => {
+        if (cancelled) return
+        setPreview(info)
+        const matched = findMatchingPlaylist(playlists, info.artist)
+        if (matched) {
+          setIsCreatingNew(false)
+          setPlaylistId(matched.id)
+          return
+        }
+        const suggestedName = normalizeArtistName(info.artist)
+        if (suggestedName) {
+          setIsCreatingNew(true)
+          setNewPlaylistName(suggestedName)
+        }
+      })
+      .catch(() => {
+        // Preview is best-effort; user can still pick or create manually.
+      })
+      .finally(() => {
+        if (!cancelled) setIsDetecting(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [playlists, sharedUrl])
 
   function handleDialogClose() {
     if (dialogRef.current) {
@@ -84,6 +122,28 @@ export function ShareTargetModal({
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {isDetecting && (
+          <p className="text-xs text-cloud-gray">Detecting artist...</p>
+        )}
+
+        {preview && (
+          <div className="flex items-center gap-3 rounded-[6px] bg-void-black/60 p-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-graphite">
+              {preview.thumbnailUrl ? (
+                <img src={preview.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <Music className="h-4 w-4 text-cloud-gray" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-pure-white">{preview.title}</p>
+              <p className="truncate text-xs text-cloud-gray">
+                {normalizeArtistName(preview.artist) || preview.sourceType}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div>
           <label htmlFor="shared-track-url" className="mb-1.5 block text-xs font-semibold text-cloud-gray">
             Song URL

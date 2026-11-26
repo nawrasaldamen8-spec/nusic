@@ -1,7 +1,9 @@
 import { apiFetch } from '../../shared/api/client'
-import type { PlayUrlResponse, Track } from '../../shared/types/api'
+import type { PlayUrlResponse, Track, TrackPreview } from '../../shared/types/api'
 
 export const tracksApi = {
+  preview: (url: string) =>
+    apiFetch<TrackPreview>(`/api/tracks/preview?url=${encodeURIComponent(url)}`),
   listByPlaylist: (playlistId: string) =>
     apiFetch<Track[]>(`/api/playlists/${playlistId}/tracks`),
   add: (playlistId: string, url: string) =>

@@ -11,11 +11,35 @@ public static class TrackEndpoints
     {
         var group = app.MapGroup("/api/tracks").RequireAuthorization();
 
+        group.MapGet("/preview", PreviewTrackAsync);
         group.MapPatch("/{id:guid}/match", UpdateTrackMatchAsync)
              .WithValidation<UpdateTrackMatchRequest>();
         group.MapDelete("/{id:guid}", DeleteTrackAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> PreviewTrackAsync(
+        string? url,
+        IMetadataResolver metadataResolver,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(url) ||
+            !Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri) ||
+            uri.Scheme is not ("http" or "https"))
+        {
+            return Results.BadRequest(new { error = "A valid HTTP or HTTPS song URL is required." });
+        }
+
+        var metadata = await metadataResolver.ResolveAsync(uri.ToString(), ct);
+        if (metadata is null)
+            return Results.BadRequest(new { error = "Could not resolve track metadata from the provided URL." });
+
+        return Results.Ok(new TrackPreviewResponse(
+            metadata.SourceType,
+            metadata.Title,
+            metadata.Artist,
+            metadata.ThumbnailUrl));
     }
 
     private static async Task<IResult> UpdateTrackMatchAsync(

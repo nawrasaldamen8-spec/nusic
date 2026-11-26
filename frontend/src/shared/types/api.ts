@@ -35,3 +35,10 @@ export interface PlayUrlResponse {
   url: string
   expiresAt: string
 }
+
+export interface TrackPreview {
+  sourceType: 'youtube' | 'spotify' | string
+  title: string
+  artist: string | null
+  thumbnailUrl: string | null
+}

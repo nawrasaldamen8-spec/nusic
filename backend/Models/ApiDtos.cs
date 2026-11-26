@@ -34,6 +34,12 @@ public sealed record TrackResponse(
 
 public sealed record PlayUrlResponse(string Url, DateTimeOffset ExpiresAt);
 
+public sealed record TrackPreviewResponse(
+    string SourceType,
+    string Title,
+    string? Artist,
+    string? ThumbnailUrl);
+
 public sealed record ResolvedTrackMetadata(
     string SourceType,
     string OriginalUrl,
