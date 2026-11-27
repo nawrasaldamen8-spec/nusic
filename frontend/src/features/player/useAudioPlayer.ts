@@ -11,6 +11,7 @@ import {
 } from './playerUtils'
 import { useAudioEvents } from './useAudioEvents'
 import { useMediaSession } from './useMediaSession'
+import { useVolume } from './useVolume'
 
 export type { BufferedRange } from './playerUtils'
 
@@ -35,6 +36,7 @@ export function useAudioPlayer(
   const [bufferedRanges, setBufferedRanges] = useState<BufferedRange[]>([])
   const [error, setError] = useState<string | null>(null)
   const resetRetryRef = useRef<() => void>(() => {})
+  const { volume, isMuted, setVolume, toggleMute } = useVolume(audioRef)
 
   useEffect(() => {
     onPlaylistPlayedRef.current = onPlaylistPlayed
@@ -180,6 +182,6 @@ export function useAudioPlayer(
 
   return {
     audioRef, currentTrack, isPlaying, isLoading, currentTime, duration,
-    bufferedRanges, error, playTrack, togglePlay, seek, next, previous, invalidateTrack,
+    bufferedRanges, error, volume, isMuted, playTrack, togglePlay, seek, setVolume, toggleMute, next, previous, invalidateTrack,
   }
 }

@@ -18,6 +18,7 @@ export interface StoredPlayback {
 
 const PLAY_URL_SAFETY_BUFFER_MS = 2 * 60 * 1000
 const LAST_PLAYBACK_KEY = 'nusic_last_playback'
+const VOLUME_STORAGE_KEY = 'nusic_volume'
 
 export function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
@@ -75,4 +76,25 @@ export function saveStoredPlayback(playback: StoredPlayback): void {
 
 export function clearStoredPlayback(): void {
   localStorage.removeItem(LAST_PLAYBACK_KEY)
+}
+
+export function loadStoredVolume(): number {
+  try {
+    const raw = localStorage.getItem(VOLUME_STORAGE_KEY)
+    if (raw === null) return 1
+    const parsed = Number(raw)
+    if (!Number.isFinite(parsed)) return 1
+    return Math.min(1, Math.max(0, parsed))
+  } catch {
+    return 1
+  }
+}
+
+export function saveStoredVolume(volume: number): void {
+  try {
+    const clamped = Math.min(1, Math.max(0, volume))
+    localStorage.setItem(VOLUME_STORAGE_KEY, String(clamped))
+  } catch {
+    // Ignore storage quota errors
+  }
 }

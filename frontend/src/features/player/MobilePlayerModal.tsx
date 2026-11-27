@@ -2,6 +2,7 @@ import { ChevronDown, Music, Pause, Play, SkipBack, SkipForward } from 'lucide-r
 import { useEffect, useRef } from 'react'
 import type { Track } from '../../shared/types/api'
 import { PlayerSeekBar } from './PlayerSeekBar'
+import { VolumeControl } from './VolumeControl'
 import type { BufferedRange } from './useAudioPlayer'
 
 interface MobilePlayerModalProps {
@@ -15,9 +16,13 @@ interface MobilePlayerModalProps {
   duration: number
   bufferedRanges: BufferedRange[]
   error: string | null
+  volume: number
+  isMuted: boolean
   onClose: () => void
   onTogglePlay: () => void
   onSeek: (seconds: number) => void
+  onVolumeChange: (volume: number) => void
+  onToggleMute: () => void
   onNext: () => void
   onPrevious: () => void
 }
@@ -33,9 +38,13 @@ export function MobilePlayerModal({
   duration,
   bufferedRanges,
   error,
+  volume,
+  isMuted,
   onClose,
   onTogglePlay,
   onSeek,
+  onVolumeChange,
+  onToggleMute,
   onNext,
   onPrevious,
 }: MobilePlayerModalProps) {
@@ -141,6 +150,14 @@ export function MobilePlayerModal({
             <SkipForward className="h-7 w-7 fill-current" />
           </button>
         </div>
+
+        <VolumeControl
+          volume={volume}
+          isMuted={isMuted}
+          onVolumeChange={onVolumeChange}
+          onToggleMute={onToggleMute}
+          className="px-2"
+        />
       </div>
     </dialog>
   )
