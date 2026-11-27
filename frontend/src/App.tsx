@@ -11,6 +11,7 @@ import { PlaylistSidebar } from './features/playlists/PlaylistSidebar'
 import {
   useCreatePlaylistMutation,
   useDeletePlaylistMutation,
+  useMarkPlaylistPlayedMutation,
   usePlaylistsQuery,
   useRenamePlaylistMutation,
 } from './features/playlists/usePlaylists'
@@ -83,11 +84,14 @@ function Workspace() {
   const createPlaylistMutation = useCreatePlaylistMutation()
   const renamePlaylistMutation = useRenamePlaylistMutation()
   const deletePlaylistMutation = useDeletePlaylistMutation()
+  const markPlaylistPlayedMutation = useMarkPlaylistPlayedMutation()
   const addTrackMutation = useAddTrackMutation(activePlaylistId)
   const updateTrackMatchMutation = useUpdateTrackMatchMutation(activePlaylistId)
   const deleteTrackMutation = useDeleteTrackMutation(activePlaylistId)
 
-  const player = useAudioPlayer(tracks, activePlaylistId)
+  const player = useAudioPlayer(tracks, activePlaylistId, (playedPlaylistId) => {
+    markPlaylistPlayedMutation.mutate(playedPlaylistId)
+  })
   const coverColor = useCoverColor(player.currentTrack?.thumbnailUrl)
 
   useEffect(() => {

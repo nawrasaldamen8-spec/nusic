@@ -17,6 +17,7 @@ public static class PlaylistEndpoints
         group.MapDelete("/{id:guid}", DeletePlaylistAsync);
         group.MapGet("/{id:guid}/tracks", GetTracksAsync);
         group.MapPost("/{id:guid}/tracks", AddTrackAsync).WithValidation<AddTrackRequest>();
+        group.MapPost("/{id:guid}/played", MarkPlaylistPlayedAsync);
 
         return app;
     }
@@ -105,5 +106,18 @@ public static class PlaylistEndpoints
             AddTrackStatus.Success => Results.Created($"/api/tracks/{result.Track!.Id}", result.Track),
             _ => Results.Problem()
         };
+    }
+
+    private static async Task<IResult> MarkPlaylistPlayedAsync(
+        Guid id,
+        ClaimsPrincipal principal,
+        IPlaylistService playlistService,
+        CancellationToken ct)
+    {
+        if (!principal.TryGetUserId(out var userId))
+            return Results.Unauthorized();
+
+        var updated = await playlistService.MarkPlaylistPlayedAsync(userId, id, ct);
+        return updated ? Results.NoContent() : Results.NotFound();
     }
 }

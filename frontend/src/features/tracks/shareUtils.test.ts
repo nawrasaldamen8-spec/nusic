@@ -8,6 +8,7 @@ const makePlaylist = (id: string, name: string): Playlist => ({
   createdAt: '2026-11-26T00:00:00Z',
   trackCount: 1,
   coverUrl: null,
+  lastPlayedAt: null,
 })
 
 describe('extractSharedUrl', () => {

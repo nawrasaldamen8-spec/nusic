@@ -13,7 +13,8 @@ public sealed record PlaylistResponse(
     string Name,
     DateTimeOffset CreatedAt,
     int TrackCount,
-    string? CoverUrl);
+    string? CoverUrl,
+    DateTimeOffset? LastPlayedAt);
 
 public sealed record AddTrackRequest(string Url);
 

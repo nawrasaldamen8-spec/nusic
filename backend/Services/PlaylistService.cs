@@ -13,7 +13,7 @@ public sealed class PlaylistService(
         await db.Playlists
             .AsNoTracking()
             .Where(p => p.UserId == userId)
-            .OrderBy(p => p.CreatedAt)
+            .OrderByDescending(p => p.LastPlayedAt ?? p.CreatedAt)
             .Select(p => new PlaylistResponse(
                 p.Id,
                 p.Name,
@@ -23,7 +23,8 @@ public sealed class PlaylistService(
                     .OrderBy(t => t.Position)
                     .ThenBy(t => t.CreatedAt)
                     .Select(t => t.ThumbnailUrl)
-                    .FirstOrDefault()))
+                    .FirstOrDefault(),
+                p.LastPlayedAt))
             .ToListAsync(ct);
 
     public async Task<PlaylistResponse> CreatePlaylistAsync(Guid userId, string name, CancellationToken ct)
@@ -38,7 +39,7 @@ public sealed class PlaylistService(
         db.Playlists.Add(playlist);
         await db.SaveChangesAsync(ct);
 
-        return new PlaylistResponse(playlist.Id, playlist.Name, playlist.CreatedAt, 0, null);
+        return new PlaylistResponse(playlist.Id, playlist.Name, playlist.CreatedAt, 0, null, null);
     }
 
     public async Task<PlaylistResponse?> RenamePlaylistAsync(
@@ -56,16 +57,21 @@ public sealed class PlaylistService(
         playlist.Name = name.Trim();
         await db.SaveChangesAsync(ct);
 
-        var trackCount = await db.Tracks.CountAsync(t => t.PlaylistId == playlistId, ct);
-        var coverUrl = await db.Tracks
+        return await db.Playlists
             .AsNoTracking()
-            .Where(t => t.PlaylistId == playlistId)
-            .OrderBy(t => t.Position)
-            .ThenBy(t => t.CreatedAt)
-            .Select(t => t.ThumbnailUrl)
-            .FirstOrDefaultAsync(ct);
-
-        return new PlaylistResponse(playlist.Id, playlist.Name, playlist.CreatedAt, trackCount, coverUrl);
+            .Where(p => p.Id == playlistId && p.UserId == userId)
+            .Select(p => new PlaylistResponse(
+                p.Id,
+                p.Name,
+                p.CreatedAt,
+                p.Tracks.Count,
+                p.Tracks
+                    .OrderBy(t => t.Position)
+                    .ThenBy(t => t.CreatedAt)
+                    .Select(t => t.ThumbnailUrl)
+                    .FirstOrDefault(),
+                p.LastPlayedAt))
+            .FirstAsync(ct);
     }
 
     public async Task<bool> DeletePlaylistAsync(Guid userId, Guid playlistId, CancellationToken ct)
@@ -84,36 +90,24 @@ public sealed class PlaylistService(
     public async Task<IReadOnlyList<TrackResponse>?> GetTracksAsync(
         Guid userId,
         Guid playlistId,
-        CancellationToken ct)
+        CancellationToken ct) =>
+        await db.Playlists
+            .AsNoTracking()
+            .Where(p => p.Id == playlistId && p.UserId == userId)
+            .Select(p => p.Tracks
+                .OrderBy(t => t.Position)
+                .ThenBy(t => t.CreatedAt)
+                .Select(t => ToTrackResponse(t))
+                .ToList())
+            .FirstOrDefaultAsync(ct);
+
+    public async Task<bool> MarkPlaylistPlayedAsync(Guid userId, Guid playlistId, CancellationToken ct)
     {
-        var exists = await db.Playlists.AnyAsync(p => p.Id == playlistId && p.UserId == userId, ct);
-        if (!exists)
-            return null;
+        var updated = await db.Playlists
+            .Where(p => p.Id == playlistId && p.UserId == userId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.LastPlayedAt, DateTimeOffset.UtcNow), ct);
 
-        var tracks = await db.Tracks
-            .Where(t => t.PlaylistId == playlistId)
-            .OrderBy(t => t.Position)
-            .ThenBy(t => t.CreatedAt)
-            .ToListAsync(ct);
-
-        var updatedAny = false;
-        foreach (var track in tracks)
-        {
-            if (track.SourceType != "spotify" || !string.IsNullOrWhiteSpace(track.Artist))
-                continue;
-
-            var artist = await metadataResolver.ResolveSpotifyArtistAsync(track.OriginalUrl, ct);
-            if (!string.IsNullOrWhiteSpace(artist))
-            {
-                track.Artist = artist;
-                updatedAny = true;
-            }
-        }
-
-        if (updatedAny)
-            await db.SaveChangesAsync(ct);
-
-        return tracks.Select(ToTrackResponse).ToList();
+        return updated > 0;
     }
 
     public async Task<AddTrackResult> AddTrackAsync(

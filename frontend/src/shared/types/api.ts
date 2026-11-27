@@ -15,6 +15,7 @@ export interface Playlist {
   createdAt: string
   trackCount: number
   coverUrl: string | null
+  lastPlayedAt: string | null
 }
 
 export interface Track {

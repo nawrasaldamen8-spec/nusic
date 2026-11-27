@@ -27,6 +27,7 @@ public sealed class NusicDbContext(DbContextOptions<NusicDbContext> options) : D
             entity.HasKey(p => p.Id);
             entity.Property(p => p.Name).HasMaxLength(120).IsRequired();
             entity.HasIndex(p => p.UserId);
+            entity.HasIndex(p => new { p.UserId, p.LastPlayedAt, p.CreatedAt });
             entity.HasOne(p => p.User)
                   .WithMany(u => u.Playlists)
                   .HasForeignKey(p => p.UserId)
@@ -42,6 +43,7 @@ public sealed class NusicDbContext(DbContextOptions<NusicDbContext> options) : D
             entity.Property(t => t.Title).HasMaxLength(255).IsRequired();
             entity.Property(t => t.Artist).HasMaxLength(255);
             entity.HasIndex(t => t.PlaylistId);
+            entity.HasIndex(t => new { t.PlaylistId, t.Position, t.CreatedAt });
             entity.HasOne(t => t.Playlist)
                   .WithMany(p => p.Tracks)
                   .HasForeignKey(t => t.PlaylistId)

@@ -17,6 +17,7 @@ public sealed class Playlist
     public Guid UserId { get; set; }
     public required string Name { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? LastPlayedAt { get; set; }
 
     public User User { get; set; } = null!;
     public List<Track> Tracks { get; set; } = [];

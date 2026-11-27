@@ -20,7 +20,6 @@ public sealed class TrackService(
             return new UpdateTrackMatchResult(UpdateTrackMatchStatus.InvalidVideoId);
 
         var track = await db.Tracks
-            .Include(t => t.Playlist)
             .FirstOrDefaultAsync(t => t.Id == trackId && t.Playlist.UserId == userId, ct);
 
         if (track is null)
@@ -38,7 +37,6 @@ public sealed class TrackService(
     public async Task<bool> DeleteTrackAsync(Guid userId, Guid trackId, CancellationToken ct)
     {
         var track = await db.Tracks
-            .Include(t => t.Playlist)
             .FirstOrDefaultAsync(t => t.Id == trackId && t.Playlist.UserId == userId, ct);
 
         if (track is null)

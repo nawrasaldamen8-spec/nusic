@@ -17,4 +17,8 @@ export const playlistsApi = {
     apiFetch<void>(`/api/playlists/${id}`, {
       method: 'DELETE',
     }),
+  markPlayed: (id: string) =>
+    apiFetch<void>(`/api/playlists/${id}/played`, {
+      method: 'POST',
+    }),
 }

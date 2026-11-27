@@ -31,6 +31,9 @@ namespace Nusic.Api.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTimeOffset?>("LastPlayedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -42,6 +45,8 @@ namespace Nusic.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "LastPlayedAt", "CreatedAt");
 
                     b.ToTable("playlists", (string)null);
                 });
@@ -93,6 +98,8 @@ namespace Nusic.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PlaylistId");
+
+                    b.HasIndex("PlaylistId", "Position", "CreatedAt");
 
                     b.ToTable("tracks", (string)null);
                 });

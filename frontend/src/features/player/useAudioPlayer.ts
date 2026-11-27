@@ -71,14 +71,24 @@ export function findAdjacentTrack(
   return targetIdx >= 0 && targetIdx < queue.length ? queue[targetIdx] : null
 }
 
-export function useAudioPlayer(queue: Track[], playlistId: string | null = null) {
+export function useAudioPlayer(
+  queue: Track[],
+  playlistId: string | null = null,
+  onPlaylistPlayed?: (playlistId: string) => void
+) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const retryAttemptedForId = useRef<string | null>(null)
   const playUrlCacheRef = useRef<Map<string, CachedPlayUrl>>(new Map())
   const warmedTrackIdsRef = useRef<Set<string>>(new Set())
   const lastSavedAtMsRef = useRef<number>(0)
+  const lastMarkedPlaylistIdRef = useRef<string | null>(null)
+  const onPlaylistPlayedRef = useRef(onPlaylistPlayed)
   const restoredForPlaylistRef = useRef<string | null>(null)
   const pendingResumeRef = useRef<{ trackId: string; currentTime: number } | null>(null)
+
+  useEffect(() => {
+    onPlaylistPlayedRef.current = onPlaylistPlayed
+  }, [onPlaylistPlayed])
 
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -140,6 +150,10 @@ export function useAudioPlayer(queue: Track[], playlistId: string | null = null)
       retryAttemptedForId.current = null
       pendingResumeRef.current = null
       setIsPlaying(true)
+      if (track.playlistId && lastMarkedPlaylistIdRef.current !== track.playlistId) {
+        lastMarkedPlaylistIdRef.current = track.playlistId
+        onPlaylistPlayedRef.current?.(track.playlistId)
+      }
       if (playlistId) {
         saveStoredPlayback({ trackId: track.id, playlistId, currentTime: resumeAtSeconds })
       }
@@ -165,6 +179,10 @@ export function useAudioPlayer(queue: Track[], playlistId: string | null = null)
         if (audio.paused) {
           await audio.play()
           setIsPlaying(true)
+          if (track.playlistId && lastMarkedPlaylistIdRef.current !== track.playlistId) {
+            lastMarkedPlaylistIdRef.current = track.playlistId
+            onPlaylistPlayedRef.current?.(track.playlistId)
+          }
         } else {
           audio.pause()
           setIsPlaying(false)

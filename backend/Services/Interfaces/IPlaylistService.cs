@@ -19,4 +19,5 @@ public interface IPlaylistService
     Task<bool> DeletePlaylistAsync(Guid userId, Guid playlistId, CancellationToken ct);
     Task<IReadOnlyList<TrackResponse>?> GetTracksAsync(Guid userId, Guid playlistId, CancellationToken ct);
     Task<AddTrackResult> AddTrackAsync(Guid userId, Guid playlistId, string url, CancellationToken ct);
+    Task<bool> MarkPlaylistPlayedAsync(Guid userId, Guid playlistId, CancellationToken ct);
 }
