@@ -49,3 +49,11 @@ public sealed record ResolvedTrackMetadata(
     string? Artist,
     int? DurationSeconds,
     string? ThumbnailUrl);
+
+public sealed record TrackSearchResultResponse(
+    string VideoId,
+    string Title,
+    string? Artist,
+    int? DurationSeconds,
+    string? ThumbnailUrl,
+    string Url);

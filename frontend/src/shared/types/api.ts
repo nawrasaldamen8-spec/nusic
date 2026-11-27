@@ -43,3 +43,12 @@ export interface TrackPreview {
   artist: string | null
   thumbnailUrl: string | null
 }
+
+export interface TrackSearchResult {
+  videoId: string
+  title: string
+  artist: string | null
+  durationSeconds: number | null
+  thumbnailUrl: string | null
+  url: string
+}

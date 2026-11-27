@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { Compass } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from './features/auth/AuthContext'
 import { AudioPlayer } from './features/player/AudioPlayer'
@@ -15,7 +16,7 @@ import {
   usePlaylistsQuery,
   useRenamePlaylistMutation,
 } from './features/playlists/usePlaylists'
-import { AddTrackForm } from './features/tracks/AddTrackForm'
+import { DiscoverModal } from './features/tracks/DiscoverModal'
 import { EditMatchModal } from './features/tracks/EditMatchModal'
 import { ShareTargetModal } from './features/tracks/ShareTargetModal'
 import { TrackList } from './features/tracks/TrackList'
@@ -42,6 +43,7 @@ export function Workspace() {
   const [searchQuery, setSearchQuery] = useState('')
   const [editingTrack, setEditingTrack] = useState<Track | null>(null)
   const [isMobilePlayerOpen, setIsMobilePlayerOpen] = useState(false)
+  const [isDiscoverOpen, setIsDiscoverOpen] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const playlistsQuery = usePlaylistsQuery()
@@ -165,7 +167,16 @@ export function Workspace() {
           {selectedPlaylist ? (
             <>
               <PlaylistHero playlist={selectedPlaylist} trackCount={tracks.length} coverUrl={selectedPlaylist.coverUrl ?? tracks[0]?.thumbnailUrl ?? null} isPlaying={isPlayingSelectedPlaylist} onTogglePlay={handleTogglePlaylistPlay} />
-              <AddTrackForm onAddTrack={(url) => addTrackMutation.mutateAsync(url).then(() => undefined)} />
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setIsDiscoverOpen(true)}
+                  className="accent-pill-btn inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold"
+                >
+                  <Compass className="h-4 w-4" aria-hidden="true" />
+                  Discover &amp; Add
+                </button>
+              </div>
               <TrackList tracks={filteredTracks} currentTrackId={player.currentTrack?.id ?? null} isPlaying={player.isPlaying} onPlayTrack={(t) => void player.playTrack(t)} onOpenMobilePlayer={openMobilePlayerIfMobile} onEditMatch={setEditingTrack} onDeleteTrack={handleDeleteTrack} />
             </>
           ) : (
@@ -173,6 +184,16 @@ export function Workspace() {
           )}
         </main>
       </div>
+      {selectedPlaylist && (
+        <DiscoverModal
+          key={selectedPlaylist.id}
+          isOpen={isDiscoverOpen}
+          playlistName={selectedPlaylist.name}
+          existingVideoIds={new Set(tracks.map((t) => t.youTubeVideoId))}
+          onClose={() => setIsDiscoverOpen(false)}
+          onAddTrack={(url) => addTrackMutation.mutateAsync(url).then(() => undefined)}
+        />
+      )}
       <EditMatchModal key={editingTrack?.id ?? 'closed'} track={editingTrack} onClose={() => setEditingTrack(null)} onSave={handleSaveMatch} />
       <ShareTargetModal key={share.pendingShareUrl ?? 'no-share'} sharedUrl={share.pendingShareUrl} playlists={playlists} defaultPlaylistId={activePlaylistId} onClose={share.closeShareModal} onAddToPlaylist={share.addSharedTrack} onCreateAndAdd={share.createAndAddSharedTrack} />
       <AudioPlayer audioRef={player.audioRef} track={player.currentTrack} coverColor={coverColor} isPlaying={player.isPlaying} isLoading={player.isLoading} currentTime={player.currentTime} duration={player.duration} bufferedRanges={player.bufferedRanges} error={player.error} volume={player.volume} isMuted={player.isMuted} onTogglePlay={() => void player.togglePlay()} onSeek={player.seek} onVolumeChange={player.setVolume} onToggleMute={player.toggleMute} onNext={player.next} onPrevious={player.previous} onOpenMobilePlayer={openMobilePlayerIfMobile} />

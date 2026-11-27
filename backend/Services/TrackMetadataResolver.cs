@@ -201,4 +201,46 @@ public sealed partial class TrackMetadataResolver(
     private sealed record SpotifyOEmbedResponse(
         [property: JsonPropertyName("title")] string? Title,
         [property: JsonPropertyName("thumbnail_url")] string? ThumbnailUrl);
+
+    public async Task<IReadOnlyList<TrackSearchResultResponse>> SearchAsync(
+        string query,
+        int limit,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return [];
+
+        var maxResults = Math.Clamp(limit, 1, 20);
+        var results = new List<TrackSearchResultResponse>(maxResults);
+
+        try
+        {
+            await foreach (var video in youtube.Search.GetVideosAsync(query.Trim(), ct))
+            {
+                var thumbnail = video.Thumbnails
+                    .OrderByDescending(t => t.Resolution.Width)
+                    .FirstOrDefault()?.Url;
+                int? durationSeconds = video.Duration.HasValue
+                    ? (int)Math.Round(video.Duration.Value.TotalSeconds)
+                    : null;
+
+                results.Add(new TrackSearchResultResponse(
+                    video.Id.Value,
+                    video.Title,
+                    video.Author.ChannelTitle,
+                    durationSeconds,
+                    thumbnail,
+                    video.Url));
+
+                if (results.Count >= maxResults)
+                    break;
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "YouTube search failed for query {Query}", query);
+        }
+
+        return results;
+    }
 }

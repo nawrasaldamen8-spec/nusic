@@ -12,6 +12,7 @@ public static class TrackEndpoints
         var group = app.MapGroup("/api/tracks").RequireAuthorization();
 
         group.MapGet("/preview", PreviewTrackAsync);
+        group.MapGet("/search", SearchTracksAsync);
         group.MapPatch("/{id:guid}/match", UpdateTrackMatchAsync)
              .WithValidation<UpdateTrackMatchRequest>();
         group.MapDelete("/{id:guid}", DeleteTrackAsync);
@@ -40,6 +41,19 @@ public static class TrackEndpoints
             metadata.Title,
             metadata.Artist,
             metadata.ThumbnailUrl));
+    }
+
+    private static async Task<IResult> SearchTracksAsync(
+        string? q,
+        int? limit,
+        IMetadataResolver metadataResolver,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+            return Results.BadRequest(new { error = "A search query is required." });
+
+        var results = await metadataResolver.SearchAsync(q.Trim(), limit ?? 12, ct);
+        return Results.Ok(results);
     }
 
     private static async Task<IResult> UpdateTrackMatchAsync(
