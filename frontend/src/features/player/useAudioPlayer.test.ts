@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Track } from '../../shared/types/api'
-import { extractBufferedRanges, findAdjacentTrack, isPlayUrlValid } from './useAudioPlayer'
+import { extractBufferedRanges, findAdjacentTrack, isPlayUrlValid } from './playerUtils'
 
 const makeTrack = (id: string, position: number): Track => ({
   id,

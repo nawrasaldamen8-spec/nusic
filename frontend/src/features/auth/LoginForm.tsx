@@ -28,12 +28,15 @@ export function LoginForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-void-black px-4">
+    <main className="relative z-10 flex min-h-screen items-center justify-center px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-[6px] bg-obsidian p-6 shadow-lg"
+        className="glass-panel w-full max-w-sm rounded-[14px] p-6"
       >
-        <h1 className="mb-6 text-2xl font-bold text-pure-white">Log in to nusic</h1>
+        <div className="mb-6 flex items-center gap-3">
+          <img src="/icons/icon-192.png" alt="" className="h-9 w-9 rounded-full object-cover" />
+          <h1 className="text-2xl font-bold text-pure-white">Log in to nusic</h1>
+        </div>
 
         <div className="space-y-4">
           <div>
@@ -46,7 +49,7 @@ export function LoginForm() {
               autoComplete="username"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full rounded-[4px] border border-ash-gray bg-graphite px-3 py-2 text-sm text-pure-white focus:border-pure-white focus:outline-none"
+              className="w-full rounded-[8px] border border-white/15 bg-[var(--glass-elevated)] px-3 py-2 text-sm text-pure-white focus:border-white/40 focus:outline-none"
             />
           </div>
 
@@ -60,7 +63,7 @@ export function LoginForm() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-[4px] border border-ash-gray bg-graphite px-3 py-2 text-sm text-pure-white focus:border-pure-white focus:outline-none"
+              className="w-full rounded-[8px] border border-white/15 bg-[var(--glass-elevated)] px-3 py-2 text-sm text-pure-white focus:border-white/40 focus:outline-none"
             />
           </div>
 
@@ -69,7 +72,7 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full bg-nusic-green px-8 py-3 text-sm font-bold text-void-black disabled:opacity-60"
+            className="accent-pill-btn w-full rounded-full px-8 py-3 text-sm font-bold disabled:opacity-60"
           >
             {isSubmitting ? 'Signing in...' : 'Log in'}
           </button>

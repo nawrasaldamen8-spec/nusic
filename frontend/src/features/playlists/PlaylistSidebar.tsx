@@ -1,10 +1,10 @@
 import { Plus } from 'lucide-react'
 import { useEffect, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
-import type { Playlist } from '../../shared/types/api'
+import type { Playlist, Track } from '../../shared/types/api'
 import { CreatePlaylistModal } from './CreatePlaylistModal'
 import { PlaylistSidebarItem } from './PlaylistSidebarItem'
 
-const RAIL_WIDTH = 64
+const RAIL_WIDTH = 68
 const DEFAULT_WIDTH = 280
 const MIN_EXPANDED_WIDTH = 200
 const COLLAPSE_THRESHOLD = 160
@@ -13,6 +13,8 @@ const MAX_WIDTH = 360
 interface PlaylistSidebarProps {
   playlists: Playlist[]
   selectedId: string | null
+  nowPlayingTrack: Track | null
+  isPlaying: boolean
   onSelect: (id: string) => void
   onCreate: (name: string) => Promise<void>
   onRename: (id: string, name: string) => Promise<void>
@@ -22,6 +24,8 @@ interface PlaylistSidebarProps {
 export function PlaylistSidebar({
   playlists,
   selectedId,
+  nowPlayingTrack,
+  isPlaying,
   onSelect,
   onCreate,
   onRename,
@@ -49,24 +53,18 @@ export function PlaylistSidebar({
       setWidth(RAIL_WIDTH)
       return
     }
-    const clamped = Math.min(MAX_WIDTH, Math.max(MIN_EXPANDED_WIDTH, rawWidth))
-    setWidth(clamped)
+    setWidth(Math.min(MAX_WIDTH, Math.max(MIN_EXPANDED_WIDTH, rawWidth)))
   }
 
   function handleResizePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     event.preventDefault()
     const startX = event.clientX
     const startWidth = width
-
-    const onPointerMove = (moveEvent: PointerEvent) => {
-      applyResizedWidth(startWidth + (moveEvent.clientX - startX))
-    }
-
+    const onPointerMove = (e: PointerEvent) => applyResizedWidth(startWidth + (e.clientX - startX))
     const onPointerUp = () => {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
     }
-
     window.addEventListener('pointermove', onPointerMove)
     window.addEventListener('pointerup', onPointerUp)
   }
@@ -94,13 +92,13 @@ export function PlaylistSidebar({
           width: isDesktop ? `${width}px` : `${RAIL_WIDTH}px`,
           containerType: 'inline-size',
         }}
-        className={`relative flex h-full min-h-0 shrink-0 flex-col bg-void-black ${
+        className={`glass-panel relative flex h-full min-h-0 shrink-0 flex-col rounded-[14px] ${
           isCollapsed ? 'px-1.5' : 'px-2'
         }`}
       >
         <div
           className={`flex items-center py-3 ${
-            isCollapsed ? 'justify-center' : 'justify-between px-3'
+            isCollapsed ? 'justify-center' : 'justify-between px-2.5'
           }`}
         >
           {!isCollapsed && <h2 className="text-sm font-bold text-cloud-gray">Your Library</h2>}
@@ -108,13 +106,13 @@ export function PlaylistSidebar({
             type="button"
             onClick={() => setIsCreateOpen(true)}
             aria-label="Create playlist"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-graphite text-pure-white hover:bg-ash-gray"
+            className="glass-pill-btn inline-flex h-9 w-9 items-center justify-center rounded-full text-pure-white"
           >
             <Plus className="h-4 w-4" />
           </button>
         </div>
 
-        <nav aria-label="Playlists" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-1 pb-28">
+        <nav aria-label="Playlists" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-1 pb-4">
           {playlists.map((playlist) => (
             <PlaylistSidebarItem
               key={playlist.id}
@@ -136,6 +134,22 @@ export function PlaylistSidebar({
           ))}
         </nav>
 
+        {!isCollapsed && nowPlayingTrack && (
+          <div className="glass-card mx-1 mb-24 flex items-center justify-between gap-2.5 rounded-[12px] px-3 py-2.5">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-pure-white">{nowPlayingTrack.title}</p>
+              <p className="truncate text-[11px] text-cloud-gray">
+                {nowPlayingTrack.artist ?? 'Unknown artist'}
+              </p>
+            </div>
+            <div aria-hidden="true" className="flex h-4 items-end gap-0.5">
+              <span className={`eq-bar eq-bar-1 h-4 w-1 rounded-full bg-nusic-green ${isPlaying ? 'eq-playing' : ''}`} />
+              <span className={`eq-bar eq-bar-2 h-4 w-1 rounded-full bg-nusic-green ${isPlaying ? 'eq-playing' : ''}`} />
+              <span className={`eq-bar eq-bar-3 h-4 w-1 rounded-full bg-nusic-green ${isPlaying ? 'eq-playing' : ''}`} />
+            </div>
+          </div>
+        )}
+
         {isDesktop && (
           <div
             role="separator"
@@ -147,7 +161,7 @@ export function PlaylistSidebar({
             aria-valuenow={width}
             onPointerDown={handleResizePointerDown}
             onKeyDown={handleResizeKeyDown}
-            className="absolute inset-y-0 right-0 hidden w-1.5 cursor-col-resize transition-colors hover:bg-ash-gray focus-visible:bg-nusic-green focus-visible:outline-none md:block"
+            className="absolute inset-y-2 right-0 hidden w-1.5 cursor-col-resize rounded-full transition-colors hover:bg-white/25 focus-visible:bg-nusic-green focus-visible:outline-none md:block"
           />
         )}
       </aside>

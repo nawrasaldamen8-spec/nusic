@@ -53,7 +53,7 @@ export function EditMatchModal({ track, onClose, onSave }: EditMatchModalProps) 
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={handleDialogClose}
-      className="m-auto w-full max-w-md rounded-[6px] bg-obsidian p-6 text-pure-white shadow-lg"
+      className="glass-panel m-auto w-full max-w-md rounded-[14px] p-6 text-pure-white"
     >
       <h1 id={titleId} className="mb-4 text-lg font-bold">
         Edit YouTube Match
@@ -70,7 +70,7 @@ export function EditMatchModal({ track, onClose, onSave }: EditMatchModalProps) 
             autoFocus
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="w-full rounded-[4px] border border-ash-gray bg-graphite px-3 py-2 text-sm text-pure-white focus:border-pure-white focus:outline-none"
+            className="w-full rounded-[8px] border border-white/15 bg-[var(--glass-elevated)] px-3 py-2 text-sm text-pure-white focus:border-white/40 focus:outline-none"
           />
         </div>
 
@@ -80,14 +80,14 @@ export function EditMatchModal({ track, onClose, onSave }: EditMatchModalProps) 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-pure-white/25 px-5 py-2 text-sm font-semibold text-pure-white"
+            className="glass-pill-btn rounded-full px-5 py-2 text-sm font-semibold text-pure-white"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSaving || !value.trim()}
-            className="rounded-full bg-nusic-green px-6 py-2 text-sm font-bold text-void-black disabled:opacity-50"
+            className="accent-pill-btn rounded-full px-6 py-2 text-sm font-bold disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </button>

@@ -46,8 +46,8 @@ export function AudioPlayer({
 
       {/* Mobile floating mini-player */}
       <div
-        style={{ backgroundColor: coverColor ?? '#1f1f1f' }}
-        className="fixed inset-x-2 bottom-2 z-40 overflow-hidden rounded-[8px] shadow-lg transition-colors duration-300 md:hidden"
+        style={{ backgroundColor: coverColor ?? 'rgba(20, 20, 24, 0.78)' }}
+        className="fixed inset-x-2 bottom-2 z-40 overflow-hidden rounded-[12px] border border-white/15 shadow-[var(--shadow-glass)] backdrop-blur-xl transition-colors duration-300 md:hidden"
       >
         <div className="flex items-center justify-between gap-3 px-2.5 py-2">
           <button
@@ -91,10 +91,10 @@ export function AudioPlayer({
       </div>
 
       {/* Desktop bottom player bar */}
-      <footer className="hidden border-t border-pure-white/10 bg-void-black px-4 py-3 md:fixed md:inset-x-0 md:bottom-0 md:z-40 md:block">
+      <footer className="glass-panel hidden border-x-0 border-b-0 px-4 py-3 md:fixed md:inset-x-0 md:bottom-0 md:z-40 md:block">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-obsidian">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white/5">
               {track?.thumbnailUrl ? (
                 <img src={track.thumbnailUrl} alt="" className="h-full w-full object-cover" />
               ) : (

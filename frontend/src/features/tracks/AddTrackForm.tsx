@@ -37,12 +37,12 @@ export function AddTrackForm({ onAddTrack }: AddTrackFormProps) {
           placeholder="YouTube or Spotify track URL"
           aria-label="YouTube or Spotify track URL"
           disabled={isAdding}
-          className="min-w-0 flex-1 rounded-full bg-graphite px-4 py-2.5 text-sm text-pure-white placeholder:text-pure-white/40 focus:outline-2 focus:outline-pure-white/30"
+          className="min-w-0 flex-1 rounded-full border border-white/10 bg-[var(--glass-elevated)] px-4 py-2.5 text-sm text-pure-white placeholder:text-pure-white/40 focus:border-white/30 focus:outline-none"
         />
         <button
           type="submit"
           disabled={isAdding || !url.trim()}
-          className="rounded-full bg-nusic-green px-6 py-2.5 text-sm font-bold text-void-black disabled:opacity-50"
+          className="accent-pill-btn rounded-full px-6 py-2.5 text-sm font-bold disabled:opacity-50"
         >
           {isAdding ? 'Resolving...' : 'Add'}
         </button>

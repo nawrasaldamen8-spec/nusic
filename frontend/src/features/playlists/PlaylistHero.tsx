@@ -19,10 +19,10 @@ export function PlaylistHero({
   return (
     <section
       aria-label={playlist.name}
-      className="rounded-[8px] bg-gradient-to-b from-graphite to-obsidian p-5 sm:p-7"
+      className="glass-card rounded-[12px] p-5 sm:p-7"
     >
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
-        <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-graphite shadow-lg sm:h-44 sm:w-44">
+        <div className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white/5 shadow-lg sm:h-44 sm:w-44">
           {coverUrl ? (
             <img src={coverUrl} alt="" className="aspect-square h-full w-full object-cover" />
           ) : (
@@ -31,7 +31,7 @@ export function PlaylistHero({
         </div>
 
         <div className="min-w-0 flex-1 space-y-3">
-          <h1 className="truncate text-3xl font-bold tracking-tight text-pure-white sm:text-5xl">
+          <h1 className="truncate text-2xl font-bold tracking-tight text-pure-white sm:text-4xl">
             {playlist.name}
           </h1>
           <div className="flex items-center gap-4">
@@ -40,7 +40,7 @@ export function PlaylistHero({
               onClick={onTogglePlay}
               disabled={trackCount === 0}
               aria-label={isPlaying ? `Pause ${playlist.name}` : `Play ${playlist.name}`}
-              className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-nusic-green text-void-black transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
+              className="accent-pill-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full disabled:cursor-not-allowed disabled:opacity-40"
             >
               {isPlaying ? (
                 <Pause className="h-5 w-5 fill-current" />

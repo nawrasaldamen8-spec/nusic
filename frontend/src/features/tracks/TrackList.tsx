@@ -29,7 +29,7 @@ export function TrackList({
 }: TrackListProps) {
   if (tracks.length === 0) {
     return (
-      <div className="rounded-[6px] bg-obsidian p-6 text-sm text-cloud-gray shadow-lg">
+      <div className="glass-card rounded-[12px] p-6 text-sm text-cloud-gray">
         No tracks in this playlist.
       </div>
     )
@@ -42,13 +42,15 @@ export function TrackList({
         return (
           <li
             key={track.id}
-            className="flex items-center gap-3 rounded-[6px] bg-obsidian p-3 shadow-lg hover:bg-graphite/70"
+            className={`glass-card flex items-center gap-3 rounded-[12px] p-3 ${
+              isActive ? 'border-nusic-green/70 bg-white/10' : ''
+            }`}
           >
             <button
               type="button"
               onClick={() => onPlayTrack(track)}
               aria-label={isActive && isPlaying ? `Pause ${track.title}` : `Play ${track.title}`}
-              className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-graphite ${
+              className={`relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white/5 ${
                 isActive ? 'ring-2 ring-nusic-green' : ''
               }`}
             >

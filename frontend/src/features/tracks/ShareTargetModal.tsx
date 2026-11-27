@@ -1,6 +1,7 @@
-import { Check, Music, Plus } from 'lucide-react'
+import { Music } from 'lucide-react'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import type { Playlist, TrackPreview } from '../../shared/types/api'
+import { SharePlaylistPicker } from './SharePlaylistPicker'
 import { findMatchingPlaylist, normalizeArtistName } from './shareUtils'
 import { tracksApi } from './tracksApi'
 
@@ -115,7 +116,7 @@ export function ShareTargetModal({
       ref={dialogRef}
       aria-labelledby={titleId}
       onClose={handleDialogClose}
-      className="m-auto w-full max-w-md rounded-[6px] bg-obsidian p-6 text-pure-white shadow-lg"
+      className="glass-panel m-auto w-full max-w-md rounded-[14px] p-6 text-pure-white"
     >
       <h1 id={titleId} className="mb-4 text-lg font-bold">
         Add to Playlist
@@ -127,8 +128,8 @@ export function ShareTargetModal({
         )}
 
         {preview && (
-          <div className="flex items-center gap-3 rounded-[6px] bg-void-black/60 p-2.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-graphite">
+          <div className="glass-card flex items-center gap-3 rounded-[12px] p-2.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white/5">
               {preview.thumbnailUrl ? (
                 <img src={preview.thumbnailUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -154,82 +155,22 @@ export function ShareTargetModal({
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="w-full rounded-[4px] border border-ash-gray bg-graphite px-3 py-2 text-sm text-pure-white focus:border-pure-white focus:outline-none"
+            className="w-full rounded-[8px] border border-white/15 bg-[var(--glass-elevated)] px-3 py-2 text-sm text-pure-white focus:border-white/40 focus:outline-none"
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-cloud-gray">
-              {isCreatingNew ? 'New Playlist' : 'Choose Playlist'}
-            </span>
-            {playlists.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsCreatingNew((prev) => !prev)
-                  setError(null)
-                }}
-                className="inline-flex items-center gap-1 rounded-full bg-graphite px-3 py-1 text-xs font-semibold text-pure-white hover:bg-ash-gray"
-              >
-                <Plus className="h-3.5 w-3.5 text-nusic-green" />
-                <span>{isCreatingNew ? 'Existing playlist' : 'New playlist'}</span>
-              </button>
-            )}
-          </div>
-
-          {isCreatingNew ? (
-            <input
-              id="shared-new-playlist-name"
-              name="newPlaylistName"
-              type="text"
-              autoFocus
-              value={newPlaylistName}
-              onChange={(e) => setNewPlaylistName(e.target.value)}
-              placeholder="Playlist name"
-              className="w-full rounded-[4px] border border-ash-gray bg-graphite px-3 py-2 text-sm text-pure-white focus:border-pure-white focus:outline-none"
-            />
-          ) : (
-            <div
-              role="radiogroup"
-              aria-label="Playlists"
-              className="max-h-60 space-y-1.5 overflow-y-auto pr-1"
-            >
-              {playlists.map((p) => {
-                const isSelected = p.id === playlistId
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    onClick={() => setPlaylistId(p.id)}
-                    className={`flex w-full items-center gap-3 rounded-[6px] px-3 py-2 text-left transition-colors ${
-                      isSelected
-                        ? 'bg-graphite ring-1 ring-nusic-green'
-                        : 'bg-void-black/60 hover:bg-graphite/60'
-                    }`}
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[4px] bg-graphite">
-                      {p.coverUrl ? (
-                        <img src={p.coverUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <Music className="h-4 w-4 text-cloud-gray" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={`truncate text-sm font-semibold ${isSelected ? 'text-nusic-green' : 'text-pure-white'}`}>
-                        {p.name}
-                      </p>
-                      <p className="text-xs text-cloud-gray">{p.trackCount} tracks</p>
-                    </div>
-                    {isSelected && <Check className="h-4 w-4 shrink-0 text-nusic-green" />}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
+        <SharePlaylistPicker
+          playlists={playlists}
+          playlistId={playlistId}
+          isCreatingNew={isCreatingNew}
+          newPlaylistName={newPlaylistName}
+          onToggleMode={() => {
+            setIsCreatingNew((prev) => !prev)
+            setError(null)
+          }}
+          onSelectPlaylist={setPlaylistId}
+          onNewPlaylistNameChange={setNewPlaylistName}
+        />
 
         {error && <p className="text-xs text-red-400">{error}</p>}
 
@@ -237,14 +178,14 @@ export function ShareTargetModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-pure-white/25 px-5 py-2 text-sm font-semibold text-pure-white"
+            className="glass-pill-btn rounded-full px-5 py-2 text-sm font-semibold text-pure-white"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isSaving || !canSubmit}
-            className="rounded-full bg-nusic-green px-6 py-2 text-sm font-bold text-void-black disabled:opacity-50"
+            className="accent-pill-btn rounded-full px-6 py-2 text-sm font-bold disabled:opacity-50"
           >
             {isSaving ? 'Adding...' : isCreatingNew ? 'Create & Add' : 'Add'}
           </button>
